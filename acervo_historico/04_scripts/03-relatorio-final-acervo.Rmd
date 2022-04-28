@@ -1,0 +1,71 @@
+---
+title: "Relatório Acervo"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::robobook:
+    highlight: kate
+---
+
+
+```{r setup, include=FALSE}
+library(knitr)
+library(rmdformats)
+library(tidyverse)
+library(data.table)
+library(DT)
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+
+# Relatório acervo Min. Nunes Marques
+
+## Acervo total
+
+```{r}
+acervo <- readRDS(file ='../01_data/01_import_acervo.rds')
+
+left_join(
+# Acervo total
+acervo %>% 
+  group_by(data) %>% 
+  summarise(acervo = n()),
+# Acervo do Ministro Nunes Marques
+acervo %>% 
+  filter(relator_atual == "MIN. NUNES MARQUES") %>% 
+  group_by(data) %>% 
+  summarise(acervo_min = n()), by = "data") %>% 
+  mutate(perc = round(acervo_min/acervo,3)*100) %>% 
+  knitr::kable()
+```
+
+## Acervo por classe processual
+
+```{r}
+# Acervo por classe
+acervo_classe <-
+  acervo %>% 
+    filter(relator_atual == "MIN. NUNES MARQUES") %>% 
+    group_by(data, classe) %>% 
+    summarise(n = n()) %>% 
+    tidyr::pivot_wider(
+      names_from = data,
+      values_from = n
+    ) 
+
+names(acervo_classe) <- c('classe', 'julho', 'agosto', 'setembro', 'outubro', 'novembro')
+
+acervo_classe %>% 
+  janitor::adorn_totals('row') %>% 
+  knitr::kable()
+```
+

@@ -1,0 +1,74 @@
+---
+title: "Relatório de acervo do Min. Barroso"
+author: "SGE"
+date: "24/08/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# Importar dados de acervo
+acervo <- readRDS('../01_data/01_import_acervo.rds')
+
+# Transformando texto data em data
+acervo <-
+acervo %>% 
+  mutate(
+    data = as.Date(data, '%Y-%m-%d')
+  )
+```
+
+
+## Questão
+
+O gabinete do Min. Barroso entrou em contato solicitando explicações do motivo da `Ext-1664` e `Ext-1626` não estarem constanto em seu acervo. No site do Supremo o Mininstro consta normalmente como relator do processo.
+
+Analisamos as bases de acervo geradas pelo Portal de Informações Gerenciais ao longo dos últimos 2 meses e **observamos que em nenhum momento houve carga do Ministro como relator**. Veja abaixo:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+#options(tibble.print_max = 50)
+acervo %>% 
+  filter(link %in% c('Ext-1626', 'Ext-1664')) %>% 
+  group_by(data, relator_atual, link) %>% 
+  summarise(n = n()) %>% 
+  pivot_wider(
+    names_from = 'link',
+    values_from = 'n'
+  ) %>% 
+  knitr::kable()
+```
+
+
+Processo **[Ext-1626](http://portal.stf.jus.br/processos/detalhe.asp?incidente=5862142)** está com relatoria do Min. Barroso desde 21/02/20. No dia 02/07/21 houve decisão de colocá-lo como segredo de justiça. No dia 10/07/21 os dados mostram que o processo retornou ao acervo, provavelmente porque deixou de ser sigiloso.
+
+Processo **[Ext-1664](http://portal.stf.jus.br/processos/detalhe.asp?incidente=6142678)** (processo público) está com relatoria do Min. Barroso desde 26/03/21, distribuído por prevenção. No dia 22/06/21 houve vista PGR e no dia 10/08 houve recebimento dos autos novamente no Tribunal.
+
+Os dados de acervo do dia 23/08/2021 para conferência:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+acervo %>% 
+  filter(data == '2021-08-23') %>% 
+  group_by(relator_atual) %>% 
+  summarise(n = n()) %>% 
+  mutate(relator_atual = 
+            ifelse(is.na(relator_atual),'SEM RELATORIA', relator_atual),
+         relator_atual = 
+           ifelse(n < 30, 'OUTROS', relator_atual)) %>% 
+  group_by(relator_atual) %>% 
+  summarise(n = sum(n)) %>% 
+  arrange(desc(n)) %>% 
+  knitr::kable()
+```
+
+
+## Sugestão
+
+Verificar se as cargas que fazem a inclusão do `relator do processo` estão sendo feitas corretamente. Caso haja falha substância é importante notificação do Secretário Geral para devida comunicação entre os Gabinetes.
+

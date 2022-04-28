@@ -1,0 +1,84 @@
+---
+title: "Relatório Min. Alexandre"
+author: "SGE - ESTAT"
+date: "26/08/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+
+# Importar dados de acervo
+acervo <- readRDS('../01_data/01_import_acervo.rds')
+```
+
+## Acervo Ministro Alexandre Morais
+
+Em resposta ao e-mail do Gabinete do Ministro Alexandre de Moraes criamos o relatório técnico a seguir. Os dados de acervo gerados para o site nos últimos dias é o seguinte:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Tabela de acervo por dia
+left_join(
+  acervo %>% 
+  group_by(data) %>% 
+  summarise(geral = n()), 
+  acervo %>% 
+  filter(relator_atual == 'MIN. ALEXANDRE DE MORAES') %>% 
+  group_by(data) %>% 
+  summarise(GMAM = n()),
+  by = 'data') %>% 
+  mutate(prop = round(GMAM/geral,3)*100) %>% 
+  knitr::kable()
+```
+
+Temos 4 relatórios de atualização diária do acervo:
+
+- Site antigo - Não atualizou desde o dia 24/08;
+- Site transparência - atualizou normal;
+- Backup pastas vitória - Não atualizou desde o dia 24/08;
+- Backup e-mail - atualizou normal (controle SGE).
+
+
+A mensagem de erro do sistema do Portal de Informações Gerenciais (PIG) é o seguinte:
+
+> Esta foi a mensagem do erro:
+"BusinessObjects_PublicationAdminErrorLog_Instance_14977522 - [ID da publicação # 14977522] - Falha na distribuição para o destino CrystalEnterprise.DiskUnmanaged. Destinatário: Administrator, Escopo do documento: 0. Acervo do Tribunal - email : 14978058 (Excel) : (AND ). Erro de diretório de destino. [[Sistema de arquivos] ([1]/[2])]: [Access is denied.
+] (FBE60013)"
+
+Apesar de que na mensagem informar erro do diretório do destino, não foi feita nenhuma atualização no relatório referente ao destino e aparentemente está tudo normal.
+
+Há 102 processos em 25/08 que não foram mais encontrados no dia 26/08. Se tudo estiver certo, são processos baixados. Veja a lista abaixo com os processos possivelmente baixados e a localização no dia 25/08:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+processos_baixados <-
+  anti_join(acervo %>% 
+    filter(relator_atual == 'MIN. ALEXANDRE DE MORAES',
+           data == '2021-08-25'),
+  acervo %>% 
+    filter(relator_atual == 'MIN. ALEXANDRE DE MORAES',
+           data == '2021-08-26'),
+    by ='link') %>% 
+  select(link, localizacao_atual) 
+
+processos_baixados %>% 
+  knitr::kable()
+```
+
+
+Com intuito de verificar a diferença de 102 no acervo do Min. Alexandre de Moraes, buscamos estes processos que `saíram` do acervo do Ministro e fizemos um batimento com tabela de baixados e verificamos que, de fato, todos processos tiveram andamento de baixa no dia 25/08.
+
+## Conclusão
+
+Os dados de acervo aparentemente estão sendo gerados corretamente pelo sistema PIG e na internet. Com
+relação a quantidade do acervo do Ministro Alexandre de Moraes não há no Portal de Informações Gerenciais evidências de erro, sendo o valor total de 778 processos consistente.
+
+Porém há alguma falha de sistema que está gerando problemas nos relatórios agendados e não os atualizou, sendo necessário ação da área responsável.
+
+Sendo assim, envio relatório técnico para STI verificar os problemas ocorridos que geraram divergências nos relatórios agendados enviados ao Gabinete do Min. Alexandre de Moraes pelo PIG.
+
+
+
